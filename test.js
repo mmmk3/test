@@ -2,7 +2,7 @@ const arrOfFields = ["name", "serviceCode", "targetCode", "creator", "orgShortNa
 const arrOfDirection = ["asc", "desc"];
 
 // сбрасывает значение у заполняемых в скрипте переменных
-const arrOfEnv = ["service_with_version", "version_of_service"]
+let arrOfEnv = ["service_with_version", "version_of_service"]
 for(a = 0; a < arrOfEnv.length; ++a) {
     pm.environment.set(arrOfEnv[a], "")
 }
