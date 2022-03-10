@@ -2,14 +2,21 @@ const arrOfFields = ["name", "serviceCode", "targetCode", "creator", "orgShortNa
 const arrOfDirection = ["asc", "desc"];
 
 // сбрасывает значение у заполняемых в скрипте переменных
-let arrOfEnv = ["service_with_version", "version_of_service"]
+const arrOfEnv = ["service_with_version", "version_of_service"]
 for(a = 0; a < arrOfEnv.length; ++a) {
     pm.environment.set(arrOfEnv[a], "")
 }
 
+let url = `${pm.environment.get("server")}/service-lib/internal/api/v1/services/info`;
+const raw = {
+    sort: [{
+        field: arrOfFields[Math.floor(Math.random() * arrOfFields.length)],
+        direction: arrOfDirection[Math.floor(Math.random() * arrOfDirection.length)]
+    }]
+}
+
 // получает список услуг
-url = pm.environment.get("server") + '/service-lib/internal/api/v1/services/info';
-echoPostRequest = {
+const echoPostRequest = {
     url: url,
     method: 'POST',
     header: {
@@ -18,7 +25,7 @@ echoPostRequest = {
     },
     body: {
         mode: 'raw',
-        raw: JSON.stringify(JSON.parse('{"sort":[{"field":"' + arrOfFields[Math.floor(Math.random() * arrOfFields.length)] + '","direction":"' + arrOfDirection[Math.floor(Math.random() * arrOfDirection.length)] + '"}]}'))
+        raw: JSON.stringify(raw)
     }
 };
 
@@ -49,16 +56,17 @@ function sendRequest1(req) {
 pm.sendRequest(echoPostRequest, function (err, res) {
     respAllServices = JSON.parse(JSON.stringify(res.json()));
 
-    if (res.code == 200) {
+    if (res.code === 200) {
 
         const _dummy = setInterval(() => { }, 30000);
 
         (async function main() {
-
-            for (i = 0; i < respAllServices.items.length; ++i) {
+            
+            for (let i = 0; i < respAllServices.items.length; ++i) {
                 // проверка на сервис код и получение версий услуги
-                if (respAllServices.items[i].serviceInfo.serviceCode.includes("100000") == false) {
-                    url = pm.environment.get("server") + '/service-lib/internal/api/v1/service/' + respAllServices.items[i].serviceInfo.serviceCode + '/versions';
+                if (respAllServices.items[i].serviceInfo.serviceCode.includes("100000")) continue
+                else {
+                    let url = `${pm.environment.get("server")}/service-lib/internal/api/v1/service/${respAllServices.items[i].serviceInfo.serviceCode}/versions`;
                     let echoPostRequest = {
                         url: url,
                         method: 'GET',
@@ -68,17 +76,17 @@ pm.sendRequest(echoPostRequest, function (err, res) {
                         }
                     };
                     await sendRequest(echoPostRequest);
-
+                    
                     let arrOfServices = JSON.parse(pm.environment.get("arr_services"));
-
-                    // проверка что есть версии и что версия не состоит в arrOfServices
-                    if (respDetailsOfService.length > 0 && arrOfServices.indexOf(JSON.parse(respAllServices.items[i].serviceInfo.serviceCode)) == -1 == true) {
-                        for (j = 0; j < respDetailsOfService.length; ++j) {
+                    
+                    // проверка, что есть версии и что версия не состоит в arrOfServices
+                    if (respDetailsOfService.length > 0 && arrOfServices.indexOf(JSON.parse(respAllServices.items[i].serviceInfo.serviceCode)) == -1) {
+                        for (let j = 0; j < respDetailsOfService.length; ++j) {
                             // проверяет, что фамилия автора версии = указанной в переменной(а лучше брать из запроса на юзера TODO)
                             if (respDetailsOfService[j].serviceVersionInfo.creator.lastName == pm.environment.get("acc_lastName")) {
-
+                                
                                 // запрашивает конкретную версию, которая подошла по условиям
-                                url1 = pm.environment.get("server") + '/service-lib/internal/api/v1/service/' + respAllServices.items[i].serviceInfo.serviceCode + '/version/' + respDetailsOfService[j].serviceVersionInfo.version;
+                                let url1 = `${pm.environment.get("server")}/service-lib/internal/api/v1/service/${respAllServices.items[i].serviceInfo.serviceCode}/version/${respDetailsOfService[j].serviceVersionInfo.version}`;
                                 let echoPostRequest1 = {
                                     url: url1,
                                     method: 'GET',
@@ -87,7 +95,7 @@ pm.sendRequest(echoPostRequest, function (err, res) {
                                         'Content-Type': 'application/json'
                                     }
                                 };
-
+                
                                 await sendRequest1(echoPostRequest1);
                                 // если нет комментов, то оставляет коммент и заполняет в переменные значения сервис кода и версии
                                 if (respDetailsOfVersion.serviceVersion.comments.length === 0) {
@@ -95,7 +103,7 @@ pm.sendRequest(echoPostRequest, function (err, res) {
                                     pm.environment.set("version_of_service", respDetailsOfService[j].serviceVersionInfo.version);
                                     let someComment = "";
                                     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-                                    for (i = 0; i < Math.floor(Math.random() * 16) + 3; i++) {
+                                    for (let i = 0; i < Math.floor(Math.random() * 16) + 3; i++) {
                                     someComment += characters.charAt(Math.floor(Math.random() * characters.length));
                                     }
                                     pm.environment.set("some_comment", someComment);
