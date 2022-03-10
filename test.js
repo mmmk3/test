@@ -104,7 +104,7 @@ pm.sendRequest(echoPostRequest, function (err, res) {
                                     let someComment = "";
                                     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
                                     for (let i = 0; i < Math.floor(Math.random() * 16) + 3; i++) {
-                                    someComment += characters.charAt(Math.floor(Math.random() * characters.length));
+                                        someComment += characters.charAt(Math.floor(Math.random() * characters.length));
                                     }
                                     pm.environment.set("some_comment", someComment);
                                     i = respAllServices.items.length + 1;
